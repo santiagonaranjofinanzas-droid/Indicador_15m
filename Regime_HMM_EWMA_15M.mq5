@@ -17,9 +17,9 @@
 #property link      "https://www.mql5.com/en/users/nuevoadmin"
 #property strict
 #property tester_file "..\\Files\\HMM_Params_15M.csv"
-#property version   "8.00" // V8: QuantFactory Full Structural Overhaul
+#property version   "8.10" // V8.1: F(t-1) Parity + Kalman State Isolation
 #property indicator_chart_window
-#property indicator_buffers 39
+#property indicator_buffers 41
 #property indicator_plots   8
 
 // Plot 1: HMA Main (Color Line) — visual only, logic uses Kalman
@@ -149,6 +149,8 @@ double b_kurtosis[];
 double b_sig_proj[];
 // V8: Online scaling buffers
 double b_raw_conf[], b_raw_vol[], b_raw_slope[];
+// V8.1: Kalman Filter Isolated State Tracking (Anti-Repainting)
+double b_kalman_x[], b_kalman_p[];
 
 //--- Global State Variables
 int    g_atr_handle    = INVALID_HANDLE;
@@ -158,10 +160,7 @@ double g_vol_ratio     = 1.0;
 double g_confidence    = 0.0;
 double g_nu_dynamic    = 4.88;  // ν calibrado dinámicamente (Punto 3)
 double g_lambda_dynamic= 0.05;  // λ calibrado dinámicamente (Punto 3)
-double g_kalman_x      = 0.0;   // Kalman state (Punto 4)
-double g_kalman_p      = 1.0;   // Kalman covariance (Punto 4)
-double g_kalman_slope  = 0.0;   // Kalman-estimated slope (Punto 4)
-double g_kalman_x_prev = 0.0;   // Previous Kalman state for slope
+double g_kalman_slope  = 0.0;   // Kalman-estimated slope (Punto 4, Display Only)
 
 color C_BULL = clrAqua;
 color C_BEAR = C'240,19,19';
@@ -335,10 +334,13 @@ int OnInit() {
     SetIndexBuffer(33, b_raw_conf,     INDICATOR_CALCULATIONS);
     SetIndexBuffer(34, b_raw_vol,      INDICATOR_CALCULATIONS);
     SetIndexBuffer(35, b_raw_slope,    INDICATOR_CALCULATIONS);
-    // Padding buffers (needed for buffer count = 39)
-    SetIndexBuffer(36, b_hma_raw_slope,INDICATOR_CALCULATIONS); // alias ok (same ptr)
-    SetIndexBuffer(37, b_t1,           INDICATOR_CALCULATIONS); // alias ok
-    SetIndexBuffer(38, b_t2,           INDICATOR_CALCULATIONS); // alias ok
+    // V8.1: Kalman Filter Buffers
+    SetIndexBuffer(36, b_kalman_x,     INDICATOR_CALCULATIONS);
+    SetIndexBuffer(37, b_kalman_p,     INDICATOR_CALCULATIONS);
+    // Padding buffers (needed for buffer count = 41)
+    SetIndexBuffer(38, b_hma_raw_slope,INDICATOR_CALCULATIONS); // alias ok (same ptr)
+    SetIndexBuffer(39, b_t1,           INDICATOR_CALCULATIONS); // alias ok
+    SetIndexBuffer(40, b_t2,           INDICATOR_CALCULATIONS); // alias ok
 
     PlotIndexSetInteger(3, PLOT_ARROW, 225);
     PlotIndexSetInteger(4, PLOT_ARROW, 226);
@@ -348,12 +350,12 @@ int OnInit() {
 
     g_atr_handle = iATR(_Symbol, _Period, 14);
     
-    // Initialize Kalman state
-    g_kalman_p = 1.0;
+    // V8.1: State now handled inside OnCalculate buffers
+    
     g_nu_dynamic = ExtHMMNu;
     g_lambda_dynamic = ExtJumpLambda;
 
-    IndicatorSetString(INDICATOR_SHORTNAME, "Regime HMM V8 (GJR/Kalman/OU)");
+    IndicatorSetString(INDICATOR_SHORTNAME, "Regime HMM V8.1 (GJR/Kalman/OU)");
     
     // V8: CSV parsing (keeps backward compat, static params used only as seed)
     int handle = FileOpen("HMM_Params_15M.csv", FILE_READ | FILE_CSV | FILE_ANSI, ',');
@@ -420,10 +422,13 @@ int OnCalculate(const int rates_total,
         ArrayInitialize(b_high, EMPTY_VALUE);
         ArrayInitialize(b_low, EMPTY_VALUE);
         ArrayInitialize(b_close, EMPTY_VALUE);
+        ArrayInitialize(b_kalman_x, 0.0);
+        ArrayInitialize(b_kalman_p, 1.0);
         // Init Kalman from first valid close
-        g_kalman_x = close[min_start];
-        g_kalman_x_prev = close[min_start];
-        g_kalman_p = 1.0;
+        if (min_start > 0) {
+            b_kalman_x[min_start-1] = close[min_start-1];
+            b_kalman_p[min_start-1] = 1.0;
+        }
     }
 
     int calc_limit = rates_total;
@@ -501,10 +506,15 @@ int OnCalculate(const int rates_total,
             g_lambda_dynamic = MathMax(0.01, MathMin(0.30, (double)jump_count / w));
         }
 
-        // PUNTO 4: Kalman Filter Gate (Kernel Object)
-        g_kalman_x_prev = g_kalman_x;
-        g_kalman_x = CStateSpace::StepKalman(close[i], g_kalman_x_prev, g_kalman_p, InpKalmanQ, InpKalmanR);
-        g_kalman_slope = (g_kalman_x - g_kalman_x_prev) / MathMax(_Point, 1e-10);
+        // PUNTO 4: Kalman Filter Gate (Kernel Object) V8.1: Buffered State Tracking
+        double prev_kx = (i > 0) ? b_kalman_x[i-1] : b_shifted_close[i];
+        double prev_kp = (i > 0) ? b_kalman_p[i-1] : 1.0;
+        double current_kp = prev_kp; // Isolated reference logic
+        
+        b_kalman_x[i] = CStateSpace::StepKalman(b_shifted_close[i], prev_kx, current_kp, InpKalmanQ, InpKalmanR);
+        b_kalman_p[i] = current_kp;
+        
+        g_kalman_slope = (b_kalman_x[i] - prev_kx) / MathMax(_Point, 1e-10);
         // Kalman gate threshold in ATR units
         double atr_i = MathMax(b_atr[MathMax(i-1,0)], 1e-10);
         double kalman_thresh = atr_i * ExtSlopeT / MathMax(_Point, 1e-10);
