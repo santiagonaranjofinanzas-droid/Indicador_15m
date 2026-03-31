@@ -11,7 +11,7 @@
 //  [x] 5. Ornstein-Uhlenbeck → Reemplaza Conditional EMA para drift
 //  [x] 6. Clamping Logístico → z ∈ [-20,20] previene NaN/overflow
 //+------------------------------------------------------------------+
-#include "MacroAgent_Kernel.mqh"
+#include "Sovereign_Core.mqh"
 
 #property copyright "Copyright 2024, TradingAlgo"
 #property link      "https://www.mql5.com/en/users/nuevoadmin"
@@ -355,7 +355,7 @@ int OnInit() {
     g_nu_dynamic = ExtHMMNu;
     g_lambda_dynamic = ExtJumpLambda;
 
-    IndicatorSetString(INDICATOR_SHORTNAME, "Regime HMM V8.1 (GJR/Kalman/OU)");
+    IndicatorSetString(INDICATOR_SHORTNAME, "Sovereign Signal V8.1");
     
     // V8: CSV parsing (keeps backward compat, static params used only as seed)
     int handle = FileOpen("HMM_Params_15M.csv", FILE_READ | FILE_CSV | FILE_ANSI, ',');
