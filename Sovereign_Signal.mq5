@@ -11,7 +11,7 @@
 //  [x] 5. Ornstein-Uhlenbeck → Reemplaza Conditional EMA para drift
 //  [x] 6. Clamping Logístico → z ∈ [-20,20] previene NaN/overflow
 //+------------------------------------------------------------------+
-#include "Sovereign_Core.mqh"
+#include <Sovereign\Sovereign_Core.mqh>
 
 #property copyright "Copyright 2024, TradingAlgo"
 #property link      "https://www.mql5.com/en/users/nuevoadmin"
