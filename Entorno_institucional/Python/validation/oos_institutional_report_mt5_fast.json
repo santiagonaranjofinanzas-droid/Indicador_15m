@@ -1,0 +1,130 @@
+{
+  "verdict": "NO_RENTABLE_OOS",
+  "aggregate_metrics": {
+    "trades": 2615.0,
+    "n_returns": 2615.0,
+    "mean": -1.1632219937124536e-05,
+    "vol": 0.00011496703578394572,
+    "sharpe": -15.737116430700837,
+    "sortino": -18.854622059298023,
+    "cagr": -0.2454005430000804,
+    "max_drawdown": -0.03016779455029517,
+    "calmar": -8.134520493069301,
+    "profit_factor": 0.7165174933432968,
+    "win_rate": 0.4458891013384321,
+    "expectancy": -1.1632219937124536e-05,
+    "terminal_equity": 0.9700227878861565
+  },
+  "deflated_sharpe": -15.674543155333332,
+  "pbo": 1.0,
+  "folds": [
+    {
+      "fold": 1,
+      "train_bars": 2666,
+      "test_bars": 2666,
+      "selected_config": {
+        "garch_window": 1100,
+        "hmm_components": 2,
+        "hmm_window": 650,
+        "cs_window": 30,
+        "kelly_fraction": 0.2,
+        "direction_edge_threshold": 0.2,
+        "evt_tail_fraction": 0.08,
+        "evt_confidence_level": 0.99,
+        "kelly_min_fraction": 0.0,
+        "kelly_max_fraction": 0.03
+      },
+      "inner_selection": {
+        "score": -36.8145952927631,
+        "pbo": 1.0,
+        "metrics": {
+          "trades": 641.0,
+          "n_returns": 641.0,
+          "mean": -4.1792421439569e-06,
+          "vol": 4.043986894839086e-05,
+          "sharpe": -16.073989568309237,
+          "sortino": -22.449545771737217,
+          "cagr": -0.0961792459057711,
+          "max_drawdown": -0.0029737151529671824,
+          "calmar": -32.343126681048496,
+          "profit_factor": 0.7488271793848054,
+          "win_rate": 0.45085803432137284,
+          "expectancy": -4.1792421439569e-06,
+          "terminal_equity": 0.9973241624918268
+        }
+      },
+      "oos_metrics": {
+        "trades": 1483.0,
+        "n_returns": 1483.0,
+        "mean": -9.979993642373013e-06,
+        "vol": 9.601911758339849e-05,
+        "sharpe": -16.166218377118966,
+        "sortino": -18.507813319859146,
+        "cagr": -0.21458947856683275,
+        "max_drawdown": -0.015832548731773977,
+        "calmar": -13.553691335633035,
+        "profit_factor": 0.7043020277125005,
+        "win_rate": 0.4524612272420769,
+        "expectancy": -9.979993642373013e-06,
+        "terminal_equity": 0.9853018467673709
+      }
+    },
+    {
+      "fold": 2,
+      "train_bars": 5332,
+      "test_bars": 2368,
+      "selected_config": {
+        "garch_window": 900,
+        "hmm_components": 3,
+        "hmm_window": 500,
+        "cs_window": 30,
+        "kelly_fraction": 0.25,
+        "direction_edge_threshold": 0.12,
+        "evt_tail_fraction": 0.05,
+        "evt_confidence_level": 0.975,
+        "kelly_min_fraction": 0.005,
+        "kelly_max_fraction": 0.05
+      },
+      "inner_selection": {
+        "score": -24.114216964455267,
+        "pbo": 1.0,
+        "metrics": {
+          "trades": 1432.0,
+          "n_returns": 1432.0,
+          "mean": -1.2875828064863674e-05,
+          "vol": 0.00016795258267375437,
+          "sharpe": -11.924065943458062,
+          "sortino": -14.724976181389762,
+          "cagr": -0.267897860327618,
+          "max_drawdown": -0.018925589933048825,
+          "calmar": -14.155324155037363,
+          "profit_factor": 0.7650481471765059,
+          "win_rate": 0.4441340782122905,
+          "expectancy": -1.2875828064863674e-05,
+          "terminal_equity": 0.9817108134780648
+        }
+      },
+      "oos_metrics": {
+        "trades": 1132.0,
+        "n_returns": 1132.0,
+        "mean": -1.3796753148358208e-05,
+        "vol": 0.0001358178585918172,
+        "sharpe": -15.79995689429999,
+        "sortino": -19.983033243740337,
+        "cagr": -0.2839437110588847,
+        "max_drawdown": -0.01638995171530222,
+        "calmar": -17.324255494528707,
+        "profit_factor": 0.7271971828228934,
+        "win_rate": 0.4372791519434629,
+        "expectancy": -1.3796753148358208e-05,
+        "terminal_equity": 0.9844930171080637
+      }
+    }
+  ],
+  "n_outer_folds": 2,
+  "n_candidates": 4,
+  "data_source": "sql_cache",
+  "bars_used": 8000,
+  "symbol": "XAUUSD.pro",
+  "timeframe": "M15"
+}

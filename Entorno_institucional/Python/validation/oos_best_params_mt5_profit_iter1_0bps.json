@@ -1,0 +1,19 @@
+{
+  "garch_window": 700,
+  "hmm_components": 3,
+  "hmm_window": 500,
+  "cs_window": 10,
+  "kelly_fraction": 0.25,
+  "direction_edge_threshold": 0.12,
+  "min_hmm_confidence": 0.64,
+  "signal_z_threshold": 0.02,
+  "max_spread_ratio": 0.9,
+  "cooldown_bars": 1,
+  "confirm_bars": 2,
+  "require_trend_alignment": true,
+  "trade_side": "both",
+  "evt_tail_fraction": 0.03,
+  "evt_confidence_level": 0.99,
+  "kelly_min_fraction": 0.005,
+  "kelly_max_fraction": 0.05
+}

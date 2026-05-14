@@ -1,0 +1,181 @@
+{
+  "verdict": "NO_RENTABLE_OOS",
+  "aggregate_metrics": {
+    "trades": 1705.0,
+    "n_returns": 1705.0,
+    "mean": -1.958441156638834e-06,
+    "vol": 0.00013837625232401512,
+    "sharpe": -2.2013284671789375,
+    "sortino": -3.046127467529472,
+    "cagr": -0.046494636347126805,
+    "max_drawdown": -0.007381621442962172,
+    "calmar": -6.298702352374896,
+    "profit_factor": 0.9540962445590028,
+    "win_rate": 0.481524926686217,
+    "expectancy": -1.958441156638834e-06,
+    "terminal_equity": 0.9966501570162821
+  },
+  "deflated_sharpe": -2.192575635428745,
+  "pbo": 1.0,
+  "folds": [
+    {
+      "fold": 1,
+      "train_bars": 1085,
+      "test_bars": 1085,
+      "selected_config": {
+        "garch_window": 1100,
+        "hmm_components": 3,
+        "hmm_window": 350,
+        "cs_window": 30,
+        "kelly_fraction": 0.3,
+        "direction_edge_threshold": 0.15,
+        "evt_tail_fraction": 0.08,
+        "evt_confidence_level": 0.99,
+        "kelly_min_fraction": 0.0,
+        "kelly_max_fraction": 0.05
+      },
+      "inner_selection": {
+        "score": -1.3590072094590677,
+        "pbo": 1.0,
+        "metrics": {
+          "trades": 321.0,
+          "n_returns": 321.0,
+          "mean": 8.100479721637631e-08,
+          "vol": 8.185996904820017e-05,
+          "sharpe": 0.153912910212024,
+          "sortino": 0.1908274704854593,
+          "cagr": 0.001880374647888594,
+          "max_drawdown": -0.001375220584971415,
+          "calmar": 1.367325844622722,
+          "profit_factor": 1.0027594941536566,
+          "win_rate": 0.5358255451713395,
+          "expectancy": 8.100479721637631e-08,
+          "terminal_equity": 1.0000249272896422
+        }
+      },
+      "oos_metrics": {
+        "trades": 628.0,
+        "n_returns": 628.0,
+        "mean": -1.7104454039604058e-06,
+        "vol": 9.685347730432485e-05,
+        "sharpe": -2.746818006012278,
+        "sortino": -4.028407514701026,
+        "cagr": -0.040643558289349846,
+        "max_drawdown": -0.0024280924186137476,
+        "calmar": -16.738884392445886,
+        "profit_factor": 0.948396229679697,
+        "win_rate": 0.482484076433121,
+        "expectancy": -1.7104454039604058e-06,
+        "terminal_equity": 0.9989234738802639
+      }
+    },
+    {
+      "fold": 2,
+      "train_bars": 2170,
+      "test_bars": 1085,
+      "selected_config": {
+        "garch_window": 700,
+        "hmm_components": 2,
+        "hmm_window": 500,
+        "cs_window": 20,
+        "kelly_fraction": 0.2,
+        "direction_edge_threshold": 0.12,
+        "evt_tail_fraction": 0.05,
+        "evt_confidence_level": 0.99,
+        "kelly_min_fraction": 0.005,
+        "kelly_max_fraction": 0.05
+      },
+      "inner_selection": {
+        "score": 27.314393238672327,
+        "pbo": 0.0,
+        "metrics": {
+          "trades": 740.0,
+          "n_returns": 740.0,
+          "mean": 3.7705544330760023e-06,
+          "vol": 9.872032495001551e-05,
+          "sharpe": 5.940657650558673,
+          "sortino": 8.547836322064924,
+          "cagr": 0.09537766550309823,
+          "max_drawdown": -0.001595723244280034,
+          "calmar": 59.7708066514574,
+          "profit_factor": 1.1238893676306423,
+          "win_rate": 0.5256756756756756,
+          "expectancy": 3.7705544330760023e-06,
+          "terminal_equity": 1.0027904854995926
+        }
+      },
+      "oos_metrics": {
+        "trades": 674.0,
+        "n_returns": 674.0,
+        "mean": -4.9996921353686395e-06,
+        "vol": 0.00017885093652519234,
+        "sharpe": -4.347983937557419,
+        "sortino": -5.909275999660569,
+        "cagr": -0.11426696202415954,
+        "max_drawdown": -0.00668096819227848,
+        "calmar": -17.103353695984275,
+        "profit_factor": 0.9066158813282577,
+        "win_rate": 0.47477744807121663,
+        "expectancy": -4.9996921353686395e-06,
+        "terminal_equity": 0.9966251295171072
+      }
+    },
+    {
+      "fold": 3,
+      "train_bars": 3255,
+      "test_bars": 857,
+      "selected_config": {
+        "garch_window": 1000,
+        "hmm_components": 2,
+        "hmm_window": 500,
+        "cs_window": 20,
+        "kelly_fraction": 0.25,
+        "direction_edge_threshold": 0.15,
+        "evt_tail_fraction": 0.05,
+        "evt_confidence_level": 0.99,
+        "kelly_min_fraction": 0.005,
+        "kelly_max_fraction": 0.05
+      },
+      "inner_selection": {
+        "score": -3.0379577991259836,
+        "pbo": 1.0,
+        "metrics": {
+          "trades": 1178.0,
+          "n_returns": 1178.0,
+          "mean": -3.775304075116331e-07,
+          "vol": 0.0001487100212048779,
+          "sharpe": -0.39486404324717683,
+          "sortino": -0.5184776744667392,
+          "cagr": -0.009356612419868404,
+          "max_drawdown": -0.006469451370168633,
+          "calmar": -1.446276026281424,
+          "profit_factor": 0.9909418831353943,
+          "win_rate": 0.49745331069609505,
+          "expectancy": -3.775304075116331e-07,
+          "terminal_equity": 0.999542351030469
+        }
+      },
+      "oos_metrics": {
+        "trades": 403.0,
+        "n_returns": 403.0,
+        "mean": 2.7414641212317263e-06,
+        "vol": 0.00011338955674687814,
+        "sharpe": 3.7604982920998418,
+        "sortino": 6.030089682097956,
+        "cagr": 0.06840394625987734,
+        "max_drawdown": -0.0021325333280929337,
+        "calmar": 32.076378530059884,
+        "profit_factor": 1.069741805928358,
+        "win_rate": 0.4913151364764268,
+        "expectancy": 2.7414641212317263e-06,
+        "terminal_equity": 1.0011028255900578
+      }
+    }
+  ],
+  "n_outer_folds": 3,
+  "n_candidates": 6,
+  "data_source": "yfinance",
+  "bars_used": 4342,
+  "symbol": "XAUUSD",
+  "timeframe": "M15"
+}

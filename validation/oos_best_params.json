@@ -1,0 +1,12 @@
+{
+  "garch_window": 1100,
+  "hmm_components": 2,
+  "hmm_window": 650,
+  "cs_window": 30,
+  "kelly_fraction": 0.3,
+  "direction_edge_threshold": 0.12,
+  "evt_tail_fraction": 0.05,
+  "evt_confidence_level": 0.975,
+  "kelly_min_fraction": 0.0,
+  "kelly_max_fraction": 0.05
+}
