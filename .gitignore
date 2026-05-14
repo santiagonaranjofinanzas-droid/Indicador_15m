@@ -1,5 +1,8 @@
 .venv/
+venv/
+**/venv/
 __pycache__/
+**/__pycache__/
 *.ex5
 *.log
 *.csv
