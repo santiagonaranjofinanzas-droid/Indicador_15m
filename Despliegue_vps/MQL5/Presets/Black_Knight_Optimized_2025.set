@@ -1,0 +1,11 @@
+InpMinStrength=0.30
+InpVolMultiplier=3.5
+InpRewardRisk=3.0
+InpNetworkLatencyMs=0
+InpUsePartials=1
+InpMagic=202505
+InpRiskPercent=1.0
+InpUseXGBoostGate=1
+InpXGMinProb=0.55
+InpXGHost=127.0.0.1
+InpXGPort=8888

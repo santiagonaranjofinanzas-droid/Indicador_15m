@@ -71,12 +71,19 @@ python quant_server.py
 ### PASO 5: Cargar el EA en el Gráfico
 
 1. Abre gráfico: **XAUUSD M15** (u otro activo optimizado)
-2. Arrastra `Black_Knight_Aut_System_Master` al gráfico
-3. Los parámetros ya vienen preconfigurados con los valores optimizados
-4. Click **Aceptar**
-5. Verificar que el botón **"Algo Trading"** esté en VERDE
+2. Arrastra `Black_Knight_Aut_System_Master` al gráfico.
+3. **Cargar Parámetros:** En la pestaña "Parámetros de entrada", haz clic en **"Cargar"** y selecciona:
+   - `MQL5/Presets/Black_Knight_Optimized_2025.set`
+4. Click **Aceptar**.
+5. Verificar que el botón **"Algo Trading"** esté en VERDE.
 
-### PASO 6: Verificar Conexión
+### PASO 6: Cargar Telemetría Inicial (Opcional pero recomendado)
+
+Para que el sistema tenga "memoria" histórica:
+1. Copia `Data/Black_Knight_Telemetry.csv` desde tu PC.
+2. Pégalo en el VPS en: `%MT5_DIR%/Terminal/Common/Files/`.
+
+### PASO 7: Verificar Conexión
 
 En la pestaña "Expertos" de MT5 debes ver:
 ```
