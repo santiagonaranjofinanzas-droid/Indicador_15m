@@ -18,7 +18,12 @@ import json
 from datetime import datetime
 
 # ── Paths ────────────────────────────────────────────────────────────────
-DATA_PATH = r"C:\Users\NuevoAdmin\AppData\Roaming\MetaQuotes\Terminal\Common\Files\Black_Knight_Telemetry.csv"
+# Primary: MT5 Common Files, Secondary: Local Data backup
+APPDATA = os.environ.get("APPDATA", "")
+MT5_COMMON = os.path.join(APPDATA, "MetaQuotes", "Terminal", "Common", "Files", "Black_Knight_Telemetry.csv")
+LOCAL_BACKUP = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "Data", "Black_Knight_Telemetry.csv"))
+
+DATA_PATH = MT5_COMMON if os.path.exists(MT5_COMMON) else LOCAL_BACKUP
 MODEL_OUT = os.path.join(os.path.dirname(__file__), "meta_model.json")
 SCALER_OUT = os.path.join(os.path.dirname(__file__), "scaler.pkl")
 REPORT_OUT = os.path.join(os.path.dirname(__file__), "training_report.json")
