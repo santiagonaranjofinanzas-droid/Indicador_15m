@@ -24,12 +24,11 @@
 
 //--- INPUTS
 input string G1 = "─── Quantum Risk Parameters ───";
-input double InpMinStrength   = 0.45;    // Min ML Strength for Entry
-input double InpVolMultiplier = 1.5;     // Multiplicador de Volatilidad para SL (ej. 2.5 sigma)
-input double InpRewardRisk    = 1.5;     // Ratio Riesgo/Beneficio (TP = SL * RR)
-input int    InpNetworkLatencyMs  = 65;      // Execution: Network Latency (ms) for Slippage
-input bool   InpUsePartials       = true;    // Dynamic Partials Enabled
-input int    InpMagic         = 202605;  // Magic Number (V30 Series)
+input double InpMinStrength   = 0.35;    // Min ML Strength for Entry
+input double InpVolMultiplier = 2.5;     // Multiplicador de Volatilidad para SL (ej. 2.5 sigma)
+input double InpRewardRisk    = 2.0;     // Ratio Riesgo/Beneficio (TP = SL * RR)
+input bool   InpUsePartials   = true;    // Use Partial Closure
+input int    InpMagic         = 30001;   // Magic Number (V30 Series)
 
 input string G2 = "─── Risk Management ───";
 input double InpRiskPercent   = 1.0;     // Risk per Trade (%)
@@ -37,13 +36,13 @@ input double InpMaxLot        = 10.0;    // Max allowed Lot
 
 input string G2B = "─── Institutional Risk Throttle ───";
 input bool   InpUseHealthRisk   = true;   // Ajustar riesgo por Health score
-input double InpHealthHardStop  = 0.10;   // No trade debajo de este health
-input double InpHealthWarn       = 0.40;  // Zona de reducción de riesgo
+input double InpHealthHardStop  = 0.30;   // No trade debajo de este health
+input double InpHealthWarn       = 0.60;  // Zona de reducción de riesgo
 input double InpRiskFloorMult    = 0.25;  // Multiplicador mínimo de riesgo
 input double InpRiskCeilMult     = 1.00;  // Multiplicador máximo de riesgo
 
 input string G2C = "─── Institutional Meta-Execution ───";
-input bool   InpUseMetaExecution  = false;  // Activar meta-labeling de ejecución (disable until calibrated)
+input bool   InpUseMetaExecution  = true;   // Activar meta-labeling de ejecución
 input double InpExecMinHealthy    = 0.55;   // Score mínimo estado healthy
 input double InpExecMinWarning    = 0.70;   // Score mínimo estado warning
 input double InpExecSpreadPenalty = 0.35;   // Penalización de spread relativo
@@ -90,7 +89,6 @@ double         g_win_ema = 0.5;
 datetime       g_last_hist_scan = 0;
 string         g_last_state = "HEALTHY";
 string         g_status = "SCANNING";
-int            g_audit_handle = INVALID_HANDLE; // Scientific Audit CSV
 
 //--- ML Telemetry Struct
 struct TradeFeatures {
@@ -122,35 +120,17 @@ int OnInit() {
         return(INIT_FAILED);
     }
     
-    // Allow socket connection during testing ONLY IF InpUseXGBoostGate is true
-    if(!MQLInfoInteger(MQL_TESTER) || InpUseXGBoostGate) {
-        ResetLastError();
-        g_xg_socket = SocketCreate();
-        if(g_xg_socket != INVALID_HANDLE) {
-            if(!SocketConnect(g_xg_socket, InpXGHost, InpXGPort, 1000)) {
-                Print("Warning: Could not connect to XGBoost Server. ML Gating will be bypassed.");
-                SocketClose(g_xg_socket);
-                g_xg_socket = INVALID_HANDLE;
-            } else {
-                Print("XGBoost Oracle Connected Successfully.");
-            }
-        }
-    } else {
-        g_xg_socket = INVALID_HANDLE;
-        Print("[TESTER MODE] XGBoost Oracle disabled for performance.");
-    }
-    
-    // --- Scientific Audit CSV ---
-    g_audit_handle = FileOpen("XGBoost_Scientific_Audit.csv", FILE_WRITE | FILE_CSV | FILE_READ | FILE_ANSI | FILE_COMMON, ',');
-    if(g_audit_handle != INVALID_HANDLE) {
-        if(FileSize(g_audit_handle) == 0) {
-            FileWrite(g_audit_handle, "time", "direction", "regime", "strength", "hmm_prob", "sig_proj",
-                      "health", "valscore", "state", "spread_ratio", "hour_sin", "hour_cos",
-                      "day_sin", "day_cos", "xg_confidence", "xg_decision", "exec_score", "trade_opened");
+    // Iniciar socket para XGBoost Oracle
+    ResetLastError();
+    g_xg_socket = SocketCreate();
+    if(g_xg_socket != INVALID_HANDLE) {
+        if(!SocketConnect(g_xg_socket, InpXGHost, InpXGPort, 1000)) {
+            Print("Warning: Could not connect to XGBoost Server. ML Gating will be bypassed.");
+            SocketClose(g_xg_socket);
+            g_xg_socket = INVALID_HANDLE;
         } else {
-            FileSeek(g_audit_handle, 0, SEEK_END);
+            Print("XGBoost Oracle Connected Successfully.");
         }
-        Print("[AUDIT] Scientific Audit CSV initialized.");
     }
     
     Print("Black_Knight_Aut_System Master EA V30.0 Initialized successfully.");
@@ -160,36 +140,7 @@ int OnInit() {
 void OnDeinit(const int reason) {
     IndicatorRelease(g_handle);
     if(g_xg_socket != INVALID_HANDLE) SocketClose(g_xg_socket);
-    if(g_audit_handle != INVALID_HANDLE) { FileClose(g_audit_handle); g_audit_handle = INVALID_HANDLE; }
     ObjectsDeleteAll(0, "BK_EA_");
-}
-
-// --- Scientific Audit Logger ---
-void WriteAuditRow(datetime time, int direction, int regime, double strength, double prob,
-                   double sig_proj, double health, double valscore, int state,
-                   double spread_ratio, double h_sin, double h_cos, double d_sin, double d_cos,
-                   double xg_conf, string xg_decision, double exec_score, bool trade_opened) {
-    if(g_audit_handle == INVALID_HANDLE) return;
-    FileWrite(g_audit_handle,
-        TimeToString(time, TIME_DATE|TIME_MINUTES),
-        (direction == 1) ? "BUY" : "SELL",
-        regime, 
-        DoubleToString(strength, 4),
-        DoubleToString(prob, 4),
-        DoubleToString(sig_proj, 6),
-        DoubleToString(health, 4),
-        DoubleToString(valscore, 4),
-        state,
-        DoubleToString(spread_ratio, 4),
-        DoubleToString(h_sin, 4),
-        DoubleToString(h_cos, 4),
-        DoubleToString(d_sin, 4),
-        DoubleToString(d_cos, 4),
-        DoubleToString(xg_conf, 4),
-        xg_decision,
-        DoubleToString(exec_score, 4),
-        trade_opened ? "YES" : "NO");
-    FileFlush(g_audit_handle);
 }
 
 // Helper para parsear respuesta de Python (Simplificado)
@@ -212,41 +163,12 @@ bool ReconnectXGSocket() {
 }
 
 double FetchXGConfidence(double strength, double prob, double sig_proj, double health, double valscore, double spread_ratio, double h_sin, double h_cos, double d_sin, double d_cos) {
-    string json = StringFormat("{\"action\":\"xg_predict\",\"data\":[%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f]}", 
-                                strength, prob, sig_proj, health, valscore, spread_ratio, h_sin, h_cos, d_sin, d_cos);
-
-    if(MQLInfoInteger(MQL_TESTER)) {
-        string req_file = "xg_request.json";
-        string res_file = "xg_response.json";
-        
-        // 1. Escribir peticion
-        int h = FileOpen(req_file, FILE_WRITE|FILE_SHARE_READ|FILE_COMMON|FILE_ANSI);
-        if(h != INVALID_HANDLE) {
-            FileWriteString(h, json);
-            FileClose(h);
-        }
-        
-        // 2. Esperar respuesta (máximo 500ms)
-        for(int i=0; i<50; i++) {
-            if(FileIsExist(res_file, FILE_COMMON)) {
-                int rh = FileOpen(res_file, FILE_READ|FILE_SHARE_WRITE|FILE_COMMON|FILE_ANSI);
-                if(rh != INVALID_HANDLE) {
-                    string res_json = FileReadString(rh);
-                    FileClose(rh);
-                    FileDelete(res_file, FILE_COMMON);
-                    return ParseJSONDouble(res_json, "xg_confidence");
-                }
-            }
-            Sleep(10);
-        }
-        return 1.0; // Fallback si el bridge no responde
-    }
-
     if(g_xg_socket == INVALID_HANDLE) {
         if(!ReconnectXGSocket()) return 1.0;
     }
     
-    json += "\n";
+    string json = StringFormat("{\"action\":\"xg_predict\",\"data\":[%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f]}\n", 
+                                strength, prob, sig_proj, health, valscore, spread_ratio, h_sin, h_cos, d_sin, d_cos);
     uchar req[];
     StringToCharArray(json, req, 0, WHOLE_ARRAY, CP_UTF8);
     
@@ -256,7 +178,7 @@ double FetchXGConfidence(double strength, double prob, double sig_proj, double h
         if(SocketSend(g_xg_socket, req, ArraySize(req)-1) <= 0) return 1.0;
     }
     
-    uchar res_sock[];
+    uchar res[];
     uint available = 0;
     for(int i=0; i<20 && !IsStopped(); i++) {
         available = SocketIsReadable(g_xg_socket);
@@ -265,9 +187,9 @@ double FetchXGConfidence(double strength, double prob, double sig_proj, double h
     }
     
     if(available > 0) {
-        int len = SocketRead(g_xg_socket, res_sock, available, 100);
+        int len = SocketRead(g_xg_socket, res, available, 100);
         if(len > 0) {
-            string ans = CharArrayToString(res_sock, 0, len);
+            string ans = CharArrayToString(res, 0, len);
             return ParseJSONDouble(ans, "xg_confidence");
         }
     }
@@ -291,24 +213,10 @@ double ParseJSONDouble(string json, string key) {
 //| Expert tick function                                             |
 //+------------------------------------------------------------------+
 void OnTick() {
-    // BUG #2 FIX: Capture IsNewBar() ONCE per tick (moved up before any use)
+    UpdateExecutionTelemetry();
+
+    // BUG #2 FIX: Capture IsNewBar() ONCE per tick
     bool is_new_bar = IsNewBar();
-
-    // PERFORMANCE: Only scan deal history on new bars (not every tick)
-    if(is_new_bar) UpdateExecutionTelemetry();
-
-    // PERFORMANCE: In tester, skip intermediate ticks if no open position to manage
-    if(MQLInfoInteger(MQL_TESTER) && !is_new_bar) {
-        bool has_pos = false;
-        for(int i=PositionsTotal()-1; i>=0; i--) {
-            if(m_position.SelectByIndex(i) && m_position.Magic() == InpMagic && m_position.Symbol() == _Symbol) {
-                has_pos = true;
-                ManagePosition();
-                break;
-            }
-        }
-        return; // Skip all signal processing, dashboard, etc.
-    }
 
     // 1. Fetch Signal on closed bar (shift=1) to avoid look-ahead in execution
     const int decision_shift = 1;
@@ -348,17 +256,12 @@ void OnTick() {
         g_last_day_sin  = MathSin(2.0 * M_PI * dt.day_of_week / 7.0);
         g_last_day_cos  = MathCos(2.0 * M_PI * dt.day_of_week / 7.0);
         
-        m_symbol.RefreshRates();
         double spread_pts = (m_symbol.Ask() - m_symbol.Bid()) / MathMax(m_symbol.Point(), 1e-12);
         double ref_price = (m_symbol.Ask() + m_symbol.Bid()) * 0.5;
         double exp_sl_pts = (ref_price * MathMax(sig_proj, 1e-6) * InpVolMultiplier) / MathMax(m_symbol.Point(), 1e-12);
         g_last_spread_ratio = spread_pts / MathMax(1.0, exp_sl_pts);
 
-        // Allow socket call during testing ONLY IF InpUseXGBoostGate is true
-        if(!MQLInfoInteger(MQL_TESTER) || InpUseXGBoostGate)
-            g_last_xg_confidence = FetchXGConfidence(strength, prob, sig_proj, health, valscore, g_last_spread_ratio, g_last_hour_sin, g_last_hour_cos, g_last_day_sin, g_last_day_cos);
-        else
-            g_last_xg_confidence = 1.0; // Bypass in tester
+        g_last_xg_confidence = FetchXGConfidence(strength, prob, sig_proj, health, valscore, g_last_spread_ratio, g_last_hour_sin, g_last_hour_cos, g_last_day_sin, g_last_day_cos);
     }
 
     // 2. Position Management
@@ -382,76 +285,25 @@ void OnTick() {
 
     // 3. Trade Entry (BUG #2 FIX: Uses captured is_new_bar)
     if(is_new_bar) {
-        // DIAGNOSTIC: Print indicator values every 1000 bars during backtesting
-        static int diag_count = 0;
-        diag_count++;
-        if(MQLInfoInteger(MQL_TESTER) && (diag_count % 1000 == 1)) {
-            PrintFormat("[DIAG] regime=%d strength=%.4f health=%.4f valscore=%.4f state=%d sig_proj=%.6f | Filters: state>0=%s health>=HS=%s regime!=0=%s str>=min=%s",
-                regime, strength, health, valscore, state, sig_proj,
-                (state > 0) ? "YES" : "NO",
-                (health >= InpHealthHardStop) ? "YES" : "NO",
-                (regime != 0) ? "YES" : "NO",
-                (strength >= InpMinStrength) ? "YES" : "NO");
-        }
-        if(!has_position && health >= InpHealthHardStop && strength >= InpMinStrength) {
-            // Determine direction: use regime if available, else fall back to HMM prob
-            int trade_dir = regime; // 1=buy, -1=sell, 0=neutral
-            if(trade_dir == 0 && strength >= InpMinStrength) {
-                // Regime is neutral but strength is high — use HMM probability for direction
-                trade_dir = (prob > 0.5) ? 1 : -1;
+        if(!has_position && state > 0 && health >= InpHealthHardStop && regime != 0 && strength >= InpMinStrength) {
+            
+            // XGBoost Meta-Gate
+            if(InpUseXGBoostGate && g_last_xg_confidence < InpXGMinProb) {
+                PrintFormat("XGBoost Gate: Entry Blocked (Prob: %.2f < %.2f)", g_last_xg_confidence, InpXGMinProb);
+                return;
             }
-            if(trade_dir == 0) { /* Still no direction, skip */ }
-            else {
-                // Compute XGBoost confidence (always, for audit)
-                double xg_conf = 1.0;
-                if(InpUseXGBoostGate) {
-                    xg_conf = FetchXGConfidence(strength, prob, sig_proj, health, valscore,
-                                               g_last_spread_ratio, g_last_hour_sin, g_last_hour_cos,
-                                               g_last_day_sin, g_last_day_cos);
-                    g_last_xg_confidence = xg_conf;
-                }
-                
-                // XGBoost Meta-Gate
-                if(InpUseXGBoostGate && xg_conf < InpXGMinProb) {
-                    // AUDIT: Log blocked signal
-                    WriteAuditRow(TimeCurrent(), trade_dir, regime, strength, prob, sig_proj,
-                                  health, valscore, state, g_last_spread_ratio,
-                                  g_last_hour_sin, g_last_hour_cos, g_last_day_sin, g_last_day_cos,
-                                  xg_conf, "BLOCKED", 0.0, false);
-                    PrintFormat("XGBoost Gate: Entry Blocked (Prob: %.2f < %.2f)", xg_conf, InpXGMinProb);
-                    return;
-                }
 
-                double exec_score = ComputeExecutionScore(strength, health, valscore, sig_proj);
-                g_last_exec_score = exec_score;
+            double exec_score = ComputeExecutionScore(strength, health, valscore, sig_proj);
+            g_last_exec_score = exec_score;
 
-                double exec_min = (state == 2) ? InpExecMinHealthy : InpExecMinWarning;
-                if(!InpUseMetaExecution || exec_score >= exec_min) {
-                    // AUDIT: Log allowed + executed signal
-                    WriteAuditRow(TimeCurrent(), trade_dir, regime, strength, prob, sig_proj,
-                                  health, valscore, state, g_last_spread_ratio,
-                                  g_last_hour_sin, g_last_hour_cos, g_last_day_sin, g_last_day_cos,
-                                  xg_conf, "ALLOWED", exec_score, true);
-                    
-                    // Mechanical Lookahead Bias Fix: Inject latency before execution
-                    if(InpNetworkLatencyMs > 0) {
-                        Sleep(InpNetworkLatencyMs);
-                    }
-                    
-                    ExecuteOrder(trade_dir, strength, sig_proj, health, state);
-                } else {
-                    // AUDIT: Log allowed by XG but blocked by exec_score
-                    WriteAuditRow(TimeCurrent(), trade_dir, regime, strength, prob, sig_proj,
-                                  health, valscore, state, g_last_spread_ratio,
-                                  g_last_hour_sin, g_last_hour_cos, g_last_day_sin, g_last_day_cos,
-                                  xg_conf, "EXEC_BLOCKED", exec_score, false);
-                }
+            double exec_min = (state == 2) ? InpExecMinHealthy : InpExecMinWarning;
+            if(!InpUseMetaExecution || exec_score >= exec_min) {
+                ExecuteOrder(regime, strength, sig_proj, health, state);
             }
         }
     }
     
-    // PERFORMANCE: Skip dashboard rendering during backtesting (huge speedup)
-    if(!MQLInfoInteger(MQL_TESTER)) DrawDashboard();
+    DrawDashboard();
 }
 
 //+------------------------------------------------------------------+
@@ -624,11 +476,11 @@ void UpdateExecutionTelemetry() {
         g_edge_ema = (1.0 - InpTelemetryEmaAlpha) * g_edge_ema + InpTelemetryEmaAlpha * edge;
         g_win_ema  = (1.0 - InpTelemetryEmaAlpha) * g_win_ema  + InpTelemetryEmaAlpha * win;
 
-        // Escribir Telemetria a CSV para XGBoost Meta-Model
+        // Escribir Telemetría a CSV para XGBoost Meta-Model
         ulong pos_ticket = HistoryDealGetInteger(deal_ticket, DEAL_POSITION_ID);
         for(int t=0; t<ArraySize(g_telemetry); t++) {
             if(g_telemetry[t].ticket == pos_ticket) {
-                int file = FileOpen("Black_Knight_Telemetry.csv", FILE_WRITE | FILE_CSV | FILE_READ | FILE_ANSI | FILE_COMMON, ',');
+                int file = FileOpen("Black_Knight_Telemetry.csv", FILE_WRITE | FILE_CSV | FILE_READ | FILE_ANSI, ',');
                 if(file != INVALID_HANDLE) {
                     if(FileSize(file) == 0) {
                         FileWrite(file, "ticket", "strength", "prob", "sig_proj", "health", "valscore", "spread_ratio", "hour_sin", "hour_cos", "day_sin", "day_cos", "result");

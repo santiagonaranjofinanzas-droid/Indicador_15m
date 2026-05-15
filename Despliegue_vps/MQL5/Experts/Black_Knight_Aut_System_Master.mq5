@@ -24,12 +24,12 @@
 
 //--- INPUTS
 input string G1 = "─── Quantum Risk Parameters ───";
-input double InpMinStrength   = 0.45;    // Min ML Strength for Entry
-input double InpVolMultiplier = 1.5;     // Multiplicador de Volatilidad para SL (ej. 2.5 sigma)
-input double InpRewardRisk    = 1.5;     // Ratio Riesgo/Beneficio (TP = SL * RR)
-input int    InpNetworkLatencyMs  = 65;      // Execution: Network Latency (ms) for Slippage
+input double InpMinStrength   = 0.30;    // Min ML Strength for Entry (Optimized 2025-05)
+input double InpVolMultiplier = 3.5;     // Multiplicador de Volatilidad para SL (Optimized)
+input double InpRewardRisk    = 3.0;     // Ratio Riesgo/Beneficio (TP = SL * RR) (Optimized)
+input int    InpNetworkLatencyMs  = 0;       // Execution: Network Latency (ms) for Slippage (Optimized)
 input bool   InpUsePartials       = true;    // Dynamic Partials Enabled
-input int    InpMagic         = 202605;  // Magic Number (V30 Series)
+input int    InpMagic         = 202505;  // Magic Number (Optimized 2025-05)
 
 input string G2 = "─── Risk Management ───";
 input double InpRiskPercent   = 1.0;     // Risk per Trade (%)
@@ -53,8 +53,8 @@ input string G3 = "─── Indicator Link ───";
 input string InpIndiPath      = "Black_Knight_Aut_System_Engine"; // BUG #9 FIX: Direct path (no subfolder)
 
 input string G3B = "─── XGBoost Meta-Model (L3) ───";
-input bool   InpUseXGBoostGate   = false;   // Activar filtro XGBoost
-input double InpXGMinProb        = 0.55;    // Probabilidad mínima de acierto
+input bool   InpUseXGBoostGate   = true;    // Activar filtro XGBoost (PRODUCTION: ON)
+input double InpXGMinProb        = 0.55;    // Probabilidad mínima de acierto (Optimized)
 input string InpXGHost           = "127.0.0.1";
 input int    InpXGPort           = 8888;
 

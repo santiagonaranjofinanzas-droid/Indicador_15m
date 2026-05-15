@@ -78,7 +78,7 @@
 input string G1 = "─── HMM Engine ───";
 input int    InpRetWindow   = 20;     // Return window (v_ret)
 input int    InpVolWindow   = 60;     // Volatility window (v_vol)
-input double InpThresh      = 0.52;   // Confidence threshold (lowered from 0.65)
+input double InpThresh      = 0.65;   // Confidence threshold
 
 // Dynamically Loaded Parameters (from CSV, overridden at runtime)
 double ExtPBull      = 0.980;
@@ -112,7 +112,7 @@ input double InpJumpSigmaK    = 3.0;  // Threshold: k*σ para detectar salto
 input string G4 = "─── Kalman Filter (HMA Replacement) ───";
 input double InpKalmanQ       = 0.0001;  // Process noise (Q) — reactividad
 input double InpKalmanR       = 0.01;    // Measurement noise (R) — suavizado
-input bool   InpKalmanGate    = false;   // Usar Kalman como gate (desactivado para evitar double-gate)
+input bool   InpKalmanGate    = true;    // Usar Kalman como gate (true) o no
 input bool   InpHMAShow       = true;    // Mostrar HMA visualmente
 
 // --- PUNTO 5: Ornstein-Uhlenbeck Drift ---
@@ -132,8 +132,8 @@ input double InpNuPriorWeight     = 0.25;  // Shrinkage de nu hacia prior (anti-
 input double InpLambdaPriorWeight = 0.25;  // Shrinkage de lambda hacia prior
 input double InpNuMaxStep         = 1.00;  // Paso máximo por recalibración (nu)
 input double InpLambdaMaxStep     = 0.03;  // Paso máximo por recalibración (lambda)
-input double InpThreshAdaptK      = 0.03;  // Ajuste dinámico de threshold por salud (from 0.12)
-input double InpStrengthAdaptK    = 0.05;  // Ajuste dinámico de strength gate (from 0.18)
+input double InpThreshAdaptK      = 0.12;  // Ajuste dinámico de threshold por salud
+input double InpStrengthAdaptK    = 0.18;  // Ajuste dinámico de strength gate
 
 // --- FASE 3/4: Online Validation & Production State ---
 input string G9 = "─── Validation & Production State ───";
